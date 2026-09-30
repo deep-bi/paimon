@@ -75,9 +75,11 @@ jobs:
 
       # deploying straight into the checkout lets maven merge maven-metadata.xml
       # with the versions already published, instead of overwriting it
+      # spark3 and flink1 are activeByDefault, which maven drops once any other
+      # profile activates (javadoc-jdk9+ and paimon-iceberg do on jdk 11)
       - name: Build and deploy Paimon ${{ env.VERSION }}
         run: |
-          mvn -B -ntp clean deploy \
+          mvn -B -ntp clean deploy -Pspark3,flink1 \
             -DskipTests -Dgpg.skip -Drat.skip \
             -Ddocs-and-source -Dmaven.javadoc.skip=true \
             -DaltDeploymentRepository=deepbi::default::file://${GITHUB_WORKSPACE}/maven-repo
