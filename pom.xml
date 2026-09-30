@@ -31,7 +31,7 @@ under the License.
     <artifactId>paimon-parent</artifactId>
     <groupId>org.apache.paimon</groupId>
     <name>Paimon : </name>
-    <version>1.4-SNAPSHOT</version>
+    <version>1.4-2-deepbi1</version>
     <packaging>pom</packaging>
 
     <url>https://paimon.apache.org</url>
@@ -111,7 +111,7 @@ under the License.
         <iceberg.version>1.6.1</iceberg.version>
         <parquet.version>1.16.0</parquet.version>
         <orc.version>1.9.2</orc.version>
-        <protobuf-java.version>3.19.6</protobuf-java.version>
+        <protobuf-java.version>3.25.5</protobuf-java.version>
         <roaringbitmap.version>1.2.1</roaringbitmap.version>
         <arrow.version>15.0.0</arrow.version>
 
@@ -1156,6 +1156,17 @@ under the License.
             </plugins>
         </pluginManagement>
     </build>
+
+    <!-- deep.bi releases of this fork, published by .github/workflows/release-deepbi.yml -->
+    <repositories>
+        <repository>
+            <id>deep-bi-github-artifact</id>
+            <url>https://raw.githubusercontent.com/deep-bi/maven-repo/main</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <!--
     Uncomment the following "repositories" tag if your maven fails to download paimon-shade snapshot files.
