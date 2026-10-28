@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.apache.paimon</groupId>
         <artifactId>paimon-filesystems</artifactId>
-        <version>1.4.2-deepbi2</version>
+        <version>1.4.2-deepbi3</version>
     </parent>
 
     <artifactId>paimon-obs-impl</artifactId>
