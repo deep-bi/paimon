@@ -24,7 +24,7 @@ under the License.
     <parent>
         <groupId>org.apache.paimon</groupId>
         <artifactId>paimon-parent</artifactId>
-        <version>1.4.2-deepbi3</version>
+        <version>1.4.2-fips-deepbi1</version>
     </parent>
 
     <artifactId>paimon-api</artifactId>

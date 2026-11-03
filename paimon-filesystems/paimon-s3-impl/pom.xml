@@ -24,7 +24,7 @@
     <parent>
         <artifactId>paimon-filesystems</artifactId>
         <groupId>org.apache.paimon</groupId>
-        <version>1.4.2-deepbi3</version>
+        <version>1.4.2-fips-deepbi1</version>
     </parent>
 
     <artifactId>paimon-s3-impl</artifactId>
@@ -82,6 +82,15 @@
             <artifactId>hadoop-aws</artifactId>
             <version>${fs.hadoopshaded-3.4.version}</version>
             <exclusions>
+                <!-- The host runtime supplies the FIPS providers and JSSE implementation. -->
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wildfly.openssl</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
                 <exclusion>
                     <!-- provided by paimon-hadoop-shaded-3.4 -->
                     <groupId>org.apache.hadoop</groupId>
@@ -288,6 +297,13 @@
                                         <exclude>PropertyList-1.0.dtd</exclude>
                                         <exclude>META-INF/services/javax.xml.stream.*</exclude>
                                         <exclude>META-INF/LICENSE.txt</exclude>
+                                    </excludes>
+                                </filter>
+                                <!-- Use the factory compiled in this module for both AWS SDK versions. -->
+                                <filter>
+                                    <artifact>org.apache.httpcomponents:httpclient</artifact>
+                                    <excludes>
+                                        <exclude>org/apache/http/impl/client/HttpClients.class</exclude>
                                     </excludes>
                                 </filter>
                                 <filter>
