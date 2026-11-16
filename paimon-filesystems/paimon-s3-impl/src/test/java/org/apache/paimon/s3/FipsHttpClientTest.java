@@ -20,6 +20,7 @@ package org.apache.paimon.s3;
 
 import com.sun.net.httpserver.HttpServer;
 import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.NTCredentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -82,7 +83,9 @@ class FipsHttpClientTest {
             BasicCredentialsProvider credentials = new BasicCredentialsProvider();
             credentials.setCredentials(
                     new AuthScope("127.0.0.1", port),
-                    new UsernamePasswordCredentials("user", "password"));
+                    "NTLM".equals(challenge)
+                            ? new NTCredentials("user", "password", "workstation", "domain")
+                            : new UsernamePasswordCredentials("user", "password"));
             HttpClientContext context = HttpClientContext.create();
             context.setCredentialsProvider(credentials);
             HttpGet request = new HttpGet("http://127.0.0.1:" + port + "/");
