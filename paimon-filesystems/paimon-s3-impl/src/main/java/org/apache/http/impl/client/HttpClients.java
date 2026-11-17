@@ -18,54 +18,91 @@
 
 package org.apache.http.impl.client;
 
+import org.apache.http.ConnectionReuseStrategy;
 import org.apache.http.auth.AuthSchemeProvider;
+import org.apache.http.client.AuthenticationStrategy;
+import org.apache.http.client.UserTokenHandler;
 import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.ConnectionKeepAliveStrategy;
 import org.apache.http.conn.HttpClientConnectionManager;
+import org.apache.http.conn.routing.HttpRoute;
+import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.auth.BasicSchemeFactory;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.impl.execchain.ClientExecChain;
+import org.apache.http.impl.execchain.MinimalClientExec;
+import org.apache.http.protocol.HttpProcessor;
+import org.apache.http.protocol.HttpProcessorBuilder;
+import org.apache.http.protocol.HttpRequestExecutor;
+import org.apache.http.util.Args;
 
-/**
- * Apache HttpClient 4.5.14 factory restricted to Basic HTTP challenge authentication for Paimon's
- * AWS SDK v1 and v2. Based on apache/httpcomponents-client, tag rel/v4.5.14, with the same package
- * and filename. Minimal clients have no authentication support. Connection management and other
- * builder defaults are unchanged.
- *
- * @since 4.3
- */
+/** @since 4.3 */
 public class HttpClients {
 
-    private HttpClients() {
-        super();
-    }
+    private HttpClients() {}
 
-    /** Creates a builder for custom clients, including both bundled AWS transports. */
+    // source override for both bundled aws sdk versions
     public static HttpClientBuilder custom() {
-        // Keep Digest and NTLM from using the MD5 service retained for checksums.
-        return HttpClientBuilder.create()
-                .setDefaultAuthSchemeRegistry(
-                        RegistryBuilder.<AuthSchemeProvider>create()
-                                .register(AuthSchemes.BASIC, new BasicSchemeFactory())
-                                .build());
+        return builder(false);
     }
 
-    /** Creates a client with default configuration. */
     public static CloseableHttpClient createDefault() {
         return custom().build();
     }
 
-    /** Creates a client with configuration based on system properties. */
     public static CloseableHttpClient createSystem() {
         return custom().useSystemProperties().build();
     }
 
-    /** Creates a client with the most basic HTTP protocol support. */
     public static CloseableHttpClient createMinimal() {
-        return new MinimalHttpClient(new PoolingHttpClientConnectionManager());
+        return createMinimal(new PoolingHttpClientConnectionManager());
     }
 
-    /** Creates a client with the most basic HTTP protocol support. */
-    public static CloseableHttpClient createMinimal(final HttpClientConnectionManager connManager) {
-        return new MinimalHttpClient(connManager);
+    public static CloseableHttpClient createMinimal(HttpClientConnectionManager connManager) {
+        Args.notNull(connManager, "HTTP connection manager");
+        // minimal execution handles its own headers and never negotiates authentication
+        return builder(true)
+                .setConnectionManager(connManager)
+                .setConnectionReuseStrategy(DefaultConnectionReuseStrategy.INSTANCE)
+                .setRoutePlanner((target, request, context) -> new HttpRoute(target))
+                .setHttpProcessor(HttpProcessorBuilder.create().build())
+                .disableAutomaticRetries()
+                .disableRedirectHandling()
+                .build();
+    }
+
+    private static HttpClientBuilder builder(boolean minimal) {
+        return new HttpClientBuilder() {
+            @Override
+            protected ClientExecChain createMainExec(
+                    HttpRequestExecutor requestExec,
+                    HttpClientConnectionManager connManager,
+                    ConnectionReuseStrategy reuseStrategy,
+                    ConnectionKeepAliveStrategy keepAliveStrategy,
+                    HttpProcessor proxyHttpProcessor,
+                    AuthenticationStrategy targetAuthStrategy,
+                    AuthenticationStrategy proxyAuthStrategy,
+                    UserTokenHandler userTokenHandler) {
+                // both sdks replace the executor, so wrap it after their configuration is applied
+                HttpRequestExecutor executor = new TlsBasicRequestExecutor(requestExec);
+                if (minimal) {
+                    return new MinimalClientExec(
+                            executor, connManager, reuseStrategy, keepAliveStrategy);
+                }
+                return super.createMainExec(
+                        executor,
+                        connManager,
+                        reuseStrategy,
+                        keepAliveStrategy,
+                        proxyHttpProcessor,
+                        targetAuthStrategy,
+                        proxyAuthStrategy,
+                        userTokenHandler);
+            }
+        }.setDefaultAuthSchemeRegistry(
+                RegistryBuilder.<AuthSchemeProvider>create()
+                        .register(AuthSchemes.BASIC, new BasicSchemeFactory())
+                        .build());
     }
 }
