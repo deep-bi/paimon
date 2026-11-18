@@ -24,7 +24,7 @@
     <parent>
         <artifactId>paimon-filesystems</artifactId>
         <groupId>org.apache.paimon</groupId>
-        <version>1.4.2-deepbi3</version>
+        <version>1.4.2-fips-deepbi1</version>
     </parent>
 
     <artifactId>paimon-hadoop-shaded-3.4</artifactId>
@@ -54,6 +54,15 @@
             <artifactId>hadoop-common</artifactId>
             <version>${fs.hadoopshaded-3.4.version}</version>
             <exclusions>
+                <!-- The host runtime supplies the FIPS providers and JSSE implementation. -->
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wildfly.openssl</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
                 <exclusion>
                     <groupId>jdk.tools</groupId>
                     <artifactId>jdk.tools</artifactId>
